@@ -11,8 +11,19 @@ else
 	exit 1
 fi
 
-output=$(eval "dart fix --apply $@")
-if [[ $output != *"Nothing to fix"* ]]; then
+# dart fix only supports single files or folders, so we need to loop over each one
+# individually.
+FIX_EXIT_CODE=0
+for FILE in $@
+do
+  output=$(eval "dart fix --apply $FILE")
+  if [[ $output != *"Nothing to fix"* ]]; then
+    FIX_EXIT_CODE=1
+  fi
+done
+
+
+if [[ FIX_EXIT_CODE -ne 0 ]]; then
   exit 1
 fi
 

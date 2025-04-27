@@ -1,5 +1,17 @@
--   id: dart-format
-    name: Format Dart Code
-    entry: hooks/dart-format
-    language: script
-    files: \.dart$
+- id: dart-format
+  name: Format Dart code
+  entry: hooks/dart-format
+  language: script
+  files: \.dart$
+
+- id: dart-fix
+  name: Apply quick fixes to Dart code
+  entry: hooks/dart-fix
+  language: script
+  files: \.dart$
+
+- id: flutter-analyze
+  name: Analyze Dart code
+  entry: hooks/flutter-analyze
+  language: script
+  files: \.dart$

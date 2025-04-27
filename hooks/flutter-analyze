@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+source ~/.bash_profile
+
+# Check if flutter is available
+if command -v flutter &> /dev/null
+then
+	FLUTTER_COMMAND="flutter"
+else
+	echo "Error: Failed to find flutter in your path"
+	exit 1
+fi
+
+flutter analyze --fatal-infos --fatal-warnings $@

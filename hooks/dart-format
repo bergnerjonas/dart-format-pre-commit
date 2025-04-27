@@ -11,4 +11,4 @@ else
 	exit 1
 fi
 
-dart format --set-exit-if-changed
+dart format --set-exit-if-changed $@

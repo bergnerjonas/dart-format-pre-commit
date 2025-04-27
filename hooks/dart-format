@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+source ~/.bash_profile
+
+# Check if dart is available
+if command -v dart &> /dev/null
+then
+	DART_COMMAND="dart"
+else
+	echo "Error: Failed to find dart in your path"
+	exit 1
+fi
+
+dart format --set-exit-if-changed

@@ -1,5 +1,5 @@
--   id: dart-pre-commit
-    name: Lint, fix and format Dart Code
-    entry: run
+-   id: dart-format
+    name: Format Dart Code
+    entry: hooks/dart-format
     language: script
     files: \.dart$

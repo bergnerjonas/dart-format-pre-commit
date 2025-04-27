@@ -1,5 +1,5 @@
 -   id: dart-pre-commit
-    name: Format Dart Code
+    name: Lint, fix and format Dart Code
     entry: run
     language: script
     files: \.dart$

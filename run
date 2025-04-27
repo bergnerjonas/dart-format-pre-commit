@@ -46,7 +46,23 @@ if [ -z "$CHANGED_FILES" ]; then
     exit 0
 fi
 
-# Check each changed file for formatting and analysis issues
+echo "# Apply automated fixes ..."
+FIX_EXIT_CODE=0
+for FOLDER in "${FOLDERS_TO_CHECK[@]}"
+do
+    for FILE in $(echo "${CHANGED_FILES}" | grep "${FOLDER}.*.dart$")
+    do
+        output=$(eval "$DART_FIX_COMMAND --dry-run ${FILE}")
+        if [[ $output != *"Nothing to fix"* ]]; then
+          FIX_EXIT_CODE=1
+        fi
+        ${DART_FIX_COMMAND} "${FILE}" --apply
+    done
+done
+if [ $FIX_EXIT_CODE -ne 0 ]; then
+    echo "Fix check failed!"
+fi
+
 echo "# Check formatting ..."
 FORMAT_EXIT_CODE=0
 for FOLDER in "${FOLDERS_TO_CHECK[@]}"
@@ -81,22 +97,7 @@ if [ $ANALYZE_EXIT_CODE -ne 0 ]; then
     echo "Analyzing check failed!"
 fi
 
-echo "# Apply automated fixes ..."
-FIX_EXIT_CODE=0
-for FOLDER in "${FOLDERS_TO_CHECK[@]}"
-do
-    for FILE in $(echo "${CHANGED_FILES}" | grep "${FOLDER}.*.dart$")
-    do
-        output=$(eval "$DART_FIX_COMMAND --dry-run ${FILE}")
-        if [[ $output != *"Nothing to fix"* ]]; then
-          FIX_EXIT_CODE=1
-        fi
-        ${DART_FIX_COMMAND} "${FILE}" --apply
-    done
-done
-if [ $FIX_EXIT_CODE -ne 0 ]; then
-    echo "Fix check failed!"
-fi
+
 
 # If any issues are found, exit with error code
 if [ $FORMAT_EXIT_CODE -ne 0 ] || [  $ANALYZE_EXIT_CODE -ne 0 ] || [  $FIX_EXIT_CODE -ne 0 ]; then

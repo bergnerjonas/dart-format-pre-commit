@@ -1,3 +1,109 @@
 #!/usr/bin/env bash
 
-dart format --output write --set-exit-if-changed $@
+# Initialize variables
+BRANCH_DEST=main
+FOLDERS_TO_CHECK=("lib" "test")
+source ~/.bash_profile
+
+
+# Check if dart is available
+if command -v dart &> /dev/null
+then
+	DART_COMMAND="dart"
+else
+	echo "Error: Failed to find dart in your path"
+	exit 1
+fi
+
+# Check if flutter is available
+if command -v flutter &> /dev/null
+then
+	FLUTTER_COMMAND="flutter"
+else
+	echo "Error: Failed to find flutter in your path"
+	exit 1
+fi
+
+DART_FORMAT_COMMAND="${DART_COMMAND} format"
+DART_FIX_COMMAND="${DART_COMMAND} fix"
+ANALYZE_COMMAND="${FLUTTER_COMMAND} analyze"
+
+# Initialize empty strings to store files that fail formatting
+FILES_NEEDING_FORMAT=""
+FILES_WITH_ANALYSIS_ISSUES=""
+
+# Get changed files from git
+CHANGED_FILES=$(git diff --name-only origin/${BRANCH_DEST})
+GIT_DIFF_EXIT_CODE=$?
+if [ $GIT_DIFF_EXIT_CODE -ne 0 ]; then
+    echo "Error: Failed to execute git diff"
+    exit $GIT_DIFF_EXIT_CODE
+fi
+
+# Exit early if no files have changed
+if [ -z "$CHANGED_FILES" ]; then
+    echo "No files have changed."
+    exit 0
+fi
+
+# Check each changed file for formatting and analysis issues
+echo "# Check formatting ..."
+FORMAT_EXIT_CODE=0
+for FOLDER in "${FOLDERS_TO_CHECK[@]}"
+do
+    for FILE in $(echo "${CHANGED_FILES}" | grep "${FOLDER}.*.dart$")
+    do
+        ${DART_FORMAT_COMMAND} --set-exit-if-changed "${FILE}"
+        if [ $? -ne 0 ]; then
+            FORMAT_EXIT_CODE=1
+        fi
+    done
+done
+
+if [ $FORMAT_EXIT_CODE -ne 0 ]; then
+    echo "Formatting check failed!"
+fi
+
+echo "# Check analysis ..."
+ANALYZE_EXIT_CODE=0
+for FOLDER in "${FOLDERS_TO_CHECK[@]}"
+do
+    for FILE in $(echo "${CHANGED_FILES}" | grep "${FOLDER}.*.dart$")
+    do
+        ${ANALYZE_COMMAND} "${FILE}" --fatal-infos --fatal-warnings
+        if [ $? -ne 0 ]; then
+            ANALYZE_EXIT_CODE=1
+        fi
+    done
+done
+
+if [ $ANALYZE_EXIT_CODE -ne 0 ]; then
+    echo "Analyzing check failed!"
+fi
+
+echo "# Apply automated fixes ..."
+FIX_EXIT_CODE=0
+for FOLDER in "${FOLDERS_TO_CHECK[@]}"
+do
+    for FILE in $(echo "${CHANGED_FILES}" | grep "${FOLDER}.*.dart$")
+    do
+        output=$(eval "$DART_FIX_COMMAND --dry-run ${FILE}")
+        if [[ $output != *"Nothing to fix"* ]]; then
+          FIX_EXIT_CODE=1
+        fi
+        ${DART_FIX_COMMAND} "${FILE}" --apply
+    done
+done
+if [ $FIX_EXIT_CODE -ne 0 ]; then
+    echo "Fix check failed!"
+fi
+
+# If any issues are found, exit with error code
+if [ $FORMAT_EXIT_CODE -ne 0 ] || [  $ANALYZE_EXIT_CODE -ne 0 ] || [  $FIX_EXIT_CODE -ne 0 ]; then
+    echo "Checks failed."
+    exit 1
+else
+    echo "Checks successful."
+    exit 0
+fi
+

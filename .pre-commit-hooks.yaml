@@ -1,4 +1,4 @@
--   id: dart-format
+-   id: dart-pre-commit
     name: Format Dart Code
     entry: run
     language: script
